@@ -15,6 +15,7 @@ class TaxiBookingController extends Controller
     public function __construct(ETaxiService $service) {
 
         $this->taxiBookings = $service;
+        $this->middleware('auth:passenger-api'/*, ['except'=>['show']]*/);
     }
 
 
@@ -32,11 +33,13 @@ class TaxiBookingController extends Controller
     {
         
         $this->taxiBookings->validateTaxiBooking($request->all());
+        $response = array();
+        $response['success'] = false;
         try {
 
             $booking = $this->taxiBookings->createTaxiBooking($request);
-
-            return response()->json($booking, 201);
+            $response['success'] = true;
+            return response()->json($response, 201);
         } catch(Exception $e) {
 
             return response()->json(['message' => $e->getMessage()], 500);
@@ -44,10 +47,10 @@ class TaxiBookingController extends Controller
     }
 
    
-    public function show($id)
+    public function show($passengerEmail)
     {
 
-        $data = $this->taxiBookings->getTaxiBooking($id);
+        $data = $this->taxiBookings->getTaxiBooking($passengerEmail);
 
         return response()->json($data);
     }
@@ -95,5 +98,43 @@ class TaxiBookingController extends Controller
 
             return response()->json(['message' => $e->getMessage()], 500);
         }
+    }
+
+    public function history(Request $request) {
+
+        $passengerEmail = $request->input('passengerEmail');
+
+        $response = $this->taxiBookings->getTaxiBooking($passengerEmail);
+
+        return response()->json($response);
+
+
+        // $response['success'] = false;
+        // $response['date'] = "";
+        // $response['sourceLatitude'] = "";
+        // $response['sourceLongitude'] = "";
+        // $response['destinationLatitude'] = "";
+        // $response['destinationLongitude'] = "";
+        // $response['amount'] = "";
+
+        // try {
+
+        //     $passenger = Passenger::where('email', $passengerEmail)->firstOrFail();
+
+        //     $booking = TaxiBooking::where('passenger_id', $passenger->id)->get();
+
+        //     $response['success'] = true;
+        //     $response['api_token'] = $passenger->api_token;
+        //     $response['name'] = $passenger->name;
+        //     $response['email'] = $passenger->email;
+                
+        //     return response()->json($response, 200);
+        //     }
+
+        //     return response()->json($response, 500);
+        // }catch(ModelNotFoundException $e) {
+
+        //     return response()->json($response, 500);
+        // }
     }
 }

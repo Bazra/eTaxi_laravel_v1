@@ -90,6 +90,11 @@ return [
             'model' => App\Passenger::class,
         ],
 
+        'taxi-bookings' => [
+            'driver' => 'eloquent',
+            'model' => App\TaxiBooking::class,
+        ],
+
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',

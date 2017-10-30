@@ -34,3 +34,6 @@ Route::resource('/v1/taxi_fare_rates', v1\TaxiFareRateController::class, [
 ]);
 
 Route::post('v1/driver/login', 'v1\DriverController@login');
+Route::post('v1/passenger/login', 'v1\PassengerController@login');
+Route::post('v1/taxi_booking/history', 'v1\TaxiBookingController@history');
+Route::post('v1/driver/free', 'v1\DriverController@freeDrivers');

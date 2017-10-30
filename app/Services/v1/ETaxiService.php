@@ -16,12 +16,12 @@ class ETaxiService {
 		'email' => 'required',
 		'password' => 'required',
 		'mobileNumber' => 'required',
-		'licenseNumber' => 'required',
 		'taxiNumber' => 'required',
+		'licenseNumber' => 'required',
 		'address' => 'required',
-		'latitude' => 'required',
+		/*'latitude' => 'required',
 		'longitude' => 'required',
-		'status' => 'required',
+		'status' => 'required',*/
 	];
 
 	public function validateDriver($driver) {
@@ -41,6 +41,11 @@ class ETaxiService {
  		return $this->filterDrivers(Driver::where('id', $id)->get());
  	}
 
+ 	public function getFreeDrivers() {
+
+ 		return $this->filterDrivers(Driver::where('status', 'free')->get());
+ 	}
+
  	public function createDriver($request) {
 
 		$driver = new Driver();
@@ -48,8 +53,8 @@ class ETaxiService {
 		$driver->email = $request->input('email');
 		$driver->password = bcrypt($request->input('password'));
 		$driver->mobileNumber = $request->input('mobileNumber');
-		$driver->licenseNumber = $request->input('licenseNumber');
 		$driver->taxiNumber = $request->input('taxiNumber');
+		$driver->licenseNumber = $request->input('licenseNumber');
 		$driver->address = $request->input('address');
 		$driver->latitude = $request->input('latitude');
 		$driver->longitude = $request->input('longitude');
@@ -59,22 +64,22 @@ class ETaxiService {
 		return 'Driver Registered';
 	}
 
-	public function updateDriver($req, $id) {
+	public function updateDriver($req, $email) {
 
-		$driver = Driver::where('id', $id)->firstOrFail();
+		$driver = Driver::where('email', $email)->firstOrFail();
 		$driver->name = $req->input('name');
 		$driver->email = $req->input('email');
 		$driver->password = bcrypt($req->input('password'));
 		$driver->mobileNumber = $req->input('mobileNumber');
-		$driver->licenseNumber = $req->input('licenseNumber');
 		$driver->taxiNumber = $req->input('taxiNumber');
+		$driver->licenseNumber = $req->input('licenseNumber');
 		$driver->address = $req->input('address');
 		$driver->latitude = $req->input('latitude');
 		$driver->longitude = $req->input('longitude');
 		$driver->status = $req->input('status');
 
 		$driver->save();
-		return 'Driver '.$driver->name.' is updated successfully';
+		return 'Driver '.$driver->name.' is updated successfully...';
 		//return $this->filterDrivers([$driver]);
 	}
 
@@ -98,12 +103,8 @@ class ETaxiService {
 				'name' => $driver->name,
 				'email' => $driver->email,
 				'mobileNumber' => $driver->mobileNumber,
-				'licenseNumber' => $driver->licenseNumber,
 				'taxiNumber' => $driver->taxiNumber,
-				'address' => $driver->address,
-				'latitude' => $driver->latitude,
-				'longitude' => $driver->longitude,
-				'status' => $driver->status
+				'licenseNumber' => $driver->licenseNumber
 			];
 
 			$data[] = $entry;
@@ -121,8 +122,6 @@ class ETaxiService {
 		'password' => 'required',
 		'mobileNumber' => 'required',
 		'address' => 'required',
-		'latitude' => 'required',
-		'longitude' => 'required',
 	];
 
 	public function validatePassenger($passenger) {
@@ -137,9 +136,9 @@ class ETaxiService {
  		return $this->filterPassengers(Passenger::all());
  	}
 
- 	public function getPassenger($id) {
+ 	public function getPassenger($email) {
 
- 		return $this->filterPassengers(Passenger::where('id', $id)->get());
+ 		return $this->filterPassengers(Passenger::where('email', $email)->get());
  	}
 
  	public function createPassenger($request) {
@@ -157,9 +156,9 @@ class ETaxiService {
 		return 'Passenger Registered';
 	}
 
-	public function updatePassenger($req, $id) {
+	public function updatePassenger($req, $email) {
 
-		$passenger = Passenger::where('id', $id)->firstOrFail();
+		$passenger = Passenger::where('email', $email)->firstOrFail();
 		$passenger->name = $req->input('name');
 		$passenger->email = $req->input('email');
 		$passenger->password = bcrypt($req->input('password'));
@@ -188,7 +187,7 @@ class ETaxiService {
 
 			$entry = [
 
-				'passenger_id_href' => route('passengers.show', ['id' => $passenger->id]),
+				//'passenger_id_href' => route('passengers.show', ['id' => $passenger->id]),
 				'name' => $passenger->name,
 				'email' => $passenger->email,
 				'mobileNumber' => $passenger->mobileNumber,
@@ -240,11 +239,14 @@ class ETaxiService {
 
 
 	protected $taxiBookingRules = [
-		'rate_id' => 'required',
-		'driver_id' => 'required',
-		'passenger_id' => 'required',
-		'latitude' => 'required',
-		'longitude' => 'required',
+		'roadType' => 'required',
+		'driverEmail' => 'required',
+		'passengerEmail' => 'required',
+		'sourceLatitude' => 'required',
+		'sourceLongitude' => 'required',
+		'destinationLatitude' => 'required',
+		'destinationLongitude' => 'required',
+		'amount' => 'required',
 	];
 
 	public function validateTaxiBooking($booking) {
@@ -258,21 +260,41 @@ class ETaxiService {
  		return TaxiBooking::all();
  	}
 
- 	public function getTaxiBooking($id) {
+ 	public function getTaxiBooking($passengerEmail) {
 
- 		return TaxiBooking::where('id', $id)->get();
+ 		$passenger = Passenger::where('email', $passengerEmail)->firstOrFail();
+
+ 		$passenger_id = $passenger->id;
+
+ 		return $this->filterBookings(TaxiBooking::where('passenger_id', $passenger_id)->get());
  	}
 
  	public function createTaxiBooking($request) {
 
 		$booking = new TaxiBooking();
-		$booking->taxiFareRate_id = $request->input('rate_id');
-		$booking->driver_id = $request->input('driver_id');
-		$booking->passenger_id = $request->input('passenger_id');
-		$booking->destinationLatitude = $request->input('latitude');
-		$booking->destinationLongitude = $request->input('longitude');
+		$driver = new Driver();
+		$passenger = new Passenger();
+		$fareRate = new TaxiFareRate();
+
+		$driverEmail = $request->input('driverEmail');
+		$driver = Driver::where('email', $driverEmail)->firstOrFail();
+
+		$passengerEmail = $request->input('passengerEmail');
+		$passenger = Passenger::where('email', $passengerEmail)->firstOrFail();
+
+		$fareRateRoadType = $request->input('roadType');
+		$fareRate = TaxiFareRate::where('roadType', $fareRateRoadType)->firstOrFail();
+
+		$booking->taxiFareRate_id = $fareRate->id;
+		$booking->driver_id = $driver->id;
+		$booking->passenger_id = $passenger->id;
+		$booking->sourceLatitude = $request->input('sourceLatitude');
+		$booking->sourceLongitude = $request->input('sourceLongitude');
+		$booking->destinationLatitude = $request->input('destinationLatitude');
+		$booking->destinationLongitude = $request->input('destinationLongitude');
 		$booking->status = $request->input('status');
-		$booking->shareable = $request->input('shareable');
+		$booking->amount = $request->input('amount');
+//		$booking->shareable = $request->input('shareable');
 
 		$booking->save();
 		return 'Taxi Booking Done';
@@ -299,6 +321,28 @@ class ETaxiService {
 		$id = $booking->id;
 		$booking->delete();
 		return 'Taxi Booking ID '.$id.' deleted successfully';
+	}
+
+		public function filterBookings($bookings) {
+
+		$data = [];
+
+		foreach($bookings as $booking) {
+
+			$entry = [
+
+				'date' => $booking->created_at,
+				'sourceLatitude' => $booking->sourceLatitude,
+				'sourceLongitude' => $booking->sourceLongitude,
+				'destinationLatitude' => $booking->destinationLatitude,
+				'destinationLongitude' => $booking->destinationLongitude,
+				'amount' => $booking->amount
+			];
+
+			$data[] = $entry;
+		}
+
+		return $data;
 	}
 }
 

@@ -23,9 +23,9 @@ class CreateDriversTable extends Migration
             $table->string('licenseNumber');
             $table->string('taxiNumber');
             $table->string('address');
-            $table->decimal('latitude', 8, 6);
-            $table->decimal('longitude', 9, 6);
-            $table->string('status')->default('free');
+            $table->decimal('latitude', 17, 15);
+            $table->decimal('longitude', 17, 14);
+            $table->string('status')->default('Free');
             $table->rememberToken();
             $table->string('api_token', 60)->unique();
             $table->timestamps();

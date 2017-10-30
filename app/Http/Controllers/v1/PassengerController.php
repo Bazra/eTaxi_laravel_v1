@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Services\v1\ETaxiService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Passenger;
+use Illuminate\Support\Facades\Hash;
 
 
 class PassengerController extends Controller
@@ -16,7 +18,7 @@ class PassengerController extends Controller
     public function __construct(ETaxiService $service) {
 
         $this->passengers = $service;
-        $this->middleware('auth:passenger-api');
+        $this->middleware('auth:passenger-api', ['except' => ['store', 'login', 'index']]);
     }
 
 
@@ -39,11 +41,15 @@ class PassengerController extends Controller
     {
         
         $this->passengers->validatePassenger($request->all());
+        $response = array();
+        $response['success'] = false;
+
         try {
 
             $passenger = $this->passengers->createPassenger($request);
 
-            return response()->json($passenger, 201);
+            $response['success'] = true;
+            return response()->json($response, 201);
 
         } catch(Exception $e) {
 
@@ -52,24 +58,31 @@ class PassengerController extends Controller
     }
 
     
-    public function show($id)
+    public function show($email)
     {
-        $data = $this->passengers->getPassenger($id);
+        $data = $this->passengers->getPassenger($email);
 
         return response()->json($data);
     }
 
     
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $email)
     {
        
         $this->passengers->validatePassenger($request->all());
+
+        $response = array();
+        $response['success'] = false;
+
         try {
 
-            $passenger = $this->passengers->updatePassenger($request, $id);
+            $passenger = $this->passengers->updatePassenger($request, $email);
+
+            $response = array();
+            $response['success'] = true;
             
-            return response()->json($passenger, 200);
+            return response()->json($response, 200);
         }
         catch(ModelNotFoundException $mnfe) {
 
@@ -77,7 +90,7 @@ class PassengerController extends Controller
         } 
         catch(Exception $e) {
 
-            return response()->json(['message' => $e->getMessage()], 500);
+            return response()->json($response, 500);
         }
     }
 
@@ -102,26 +115,42 @@ class PassengerController extends Controller
     }
 
 
-    public function login(Request $request) {
+        public function login(Request $request) {
 
         $email = $request->input('email');
         $password = $request->input('password');
+        // $response = array();
+        // $response[]
+        $response = array();
+        $response['success'] = false;
+        $response['name'] = "";
+        $response['email'] = "";
+        $response['api_token'] = "";
+        $response['address'] = "";
+        $response['mobileNumber'] = "";
+
 
         try {
 
             $passenger = Passenger::where('email', $email)->firstOrFail();
 
             if(Hash::check($password, $passenger->password)) {
+
+                $response['success'] = true;
+                $response['api_token'] = $passenger->api_token;
+                $response['name'] = $passenger->name;
+                $response['email'] = $passenger->email;
+                $response['address'] = $passenger->address;
+                $response['mobileNumber'] = $passenger->mobileNumber;
                 
-                return $passenger->api_token;
+                return response()->json($response, 200);
             }
 
-            return 'Invalid password';
+            return response()->json($response, 500);
         
         }catch(ModelNotFoundException $e) {
 
-            return 'Invalid email';
+            return response()->json($response, 500);
         }
     }
-
 }

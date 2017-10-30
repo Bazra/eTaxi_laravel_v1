@@ -21,8 +21,8 @@ class CreatePassengersTable extends Migration
             $table->string('password');
             $table->string('mobileNumber');
             $table->string('address');
-            $table->decimal('latitude', 8, 6);
-            $table->decimal('longitude', 9, 6);
+            $table->decimal('latitude', 17, 15);
+            $table->decimal('longitude', 17, 14);
             $table->rememberToken();
             $table->string('api_token', 60)->unique();
             $table->timestamps();

@@ -32,9 +32,12 @@ class CreateTaxiBookingsTable extends Migration
                     ->references('id')
                     ->on('passengers')
                     ->onDelete('cascade');
-            $table->decimal('destinationLatitude', 8, 6);
-            $table->decimal('destinationLongitude', 9, 6);
+            $table->decimal('sourceLatitude', 17, 15);
+            $table->decimal('sourceLongitude', 17, 14);
+            $table->decimal('destinationLatitude', 17, 15);
+            $table->decimal('destinationLongitude', 17, 14);
             $table->string('status');
+            $table->decimal('amount', 6, 2);
             $table->integer('shareable')->unsigned()->nullable();
             
             $table->timestamps();
